@@ -340,4 +340,4 @@ MIT
 
 ## Support
 
-For issues or questions, open a GitHub issue or contact your system administrator.
+For issues or questions, open a GitHub issue or contact your system administrator..
