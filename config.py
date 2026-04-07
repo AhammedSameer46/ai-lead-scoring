@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     # HubSpot Configuration
     HUBSPOT_PORTAL_ID: Optional[str] = None  # Your HubSpot portal/account ID
     
+    # Telegram Bot Configuration
+    TELEGRAM_BOT_TOKEN: str = "your-telegram-bot-token"
+    TELEGRAM_CHAT_ID: str = "your-telegram-chat-id"
+    
+    # Company Information
+    COMPANY_NAME: str = "The One'z and Zero"
+    COMPANY_EMAIL: str = "theonesnzeros@gmail.com"
+    
     # Lead Routing Configuration
     HOT_LEAD_OWNER_ID: str = "hot-lead-owner-user-id"
     WARM_LEAD_OWNER_ID: str = "warm-lead-owner-user-id"
