@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Company Information
     COMPANY_NAME: str = "The One'z and Zero"
     COMPANY_EMAIL: str = "theonesnzeros@gmail.com"
+    GMAIL_APP_PASSWORD: str = "your-gmail-app-password"
     
     # Lead Routing Configuration
     HOT_LEAD_OWNER_ID: str = "hot-lead-owner-user-id"
@@ -57,3 +58,4 @@ class Settings(BaseSettings):
 
 # Global settings instance
 settings = Settings()
+
