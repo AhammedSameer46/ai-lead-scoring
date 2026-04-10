@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: linkedin-lead-finder
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api_server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GROQ_API_KEY
+        sync: false
+      - key: HUBSPOT_API_KEY
+        sync: false
+      - key: HUBSPOT_PORTAL_ID
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: COMPANY_EMAIL
+        sync: false
+      - key: COMPANY_NAME
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: HOT_LEAD_OWNER_ID
+        sync: false
+      - key: WARM_LEAD_OWNER_ID
+        sync: false
+      - key: COLD_LEAD_OWNER_ID
+        sync: false
