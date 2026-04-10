@@ -20,13 +20,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="LinkedIn Lead Capture API")
 
-# Enable CORS so browser can send requests
+# Enable CORS so browser can send requests from ANY domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=False,  # Changed to False for wildcard origins
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
 )
 
 
@@ -56,6 +56,12 @@ async def root():
 async def health():
     """Health check for Render"""
     return {"status": "healthy"}
+
+
+@app.options("/api/capture-post")
+async def capture_options():
+    """Handle CORS preflight request"""
+    return {"status": "ok"}
 
 
 @app.post("/api/capture-post")
@@ -150,3 +156,4 @@ async def capture_linkedin_post(post_data: LinkedInPostCapture):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+    
