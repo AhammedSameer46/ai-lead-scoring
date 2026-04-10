@@ -12,6 +12,7 @@ from linkedin_analyzer import LinkedInAnalyzer
 from email_drafter import EmailDrafter
 from telegram_notifier import TelegramNotifier
 from hubspot_client import HubSpotClient
+from gmail_sender import GmailSender
 from config import settings
 
 # Configure logging
@@ -107,6 +108,56 @@ async def analyze_linkedin_post(
             )
             
             logger.info("Email draft sent to Telegram for review")
+            
+            # Ask user if they want to send the email now
+            print("\n" + "="*60)
+            print("EMAIL DRAFT READY")
+            print("="*60)
+            print(f"To: {author_name or 'Prospect'}")
+            print(f"Subject: {email_draft.get('subject', '')}")
+            print(f"\nBody:\n{email_draft.get('body', '')}")
+            print("="*60)
+            
+            send_now = input("\nSend this email now? (yes/no): ").strip().lower()
+            
+            if send_now in ['yes', 'y']:
+                # Get prospect email
+                prospect_email = input("Enter prospect's email address: ").strip()
+                
+                if prospect_email:
+                    logger.info(f"Sending email to {prospect_email}...")
+                    
+                    # Initialize Gmail sender
+                    gmail = GmailSender(
+                        email=settings.COMPANY_EMAIL,
+                        app_password=settings.GMAIL_APP_PASSWORD
+                    )
+                    
+                    # Send email
+                    success = gmail.send_email(
+                        to_email=prospect_email,
+                        subject=email_draft.get('subject', ''),
+                        body=email_draft.get('body', ''),
+                        to_name=author_name
+                    )
+                    
+                    if success:
+                        print(f"\n✅ Email sent successfully to {prospect_email}!")
+                        
+                        # Notify via Telegram
+                        await telegram.send_message(
+                            f"✅ Email sent to {author_name or 'prospect'} ({prospect_email})\n"
+                            f"Subject: {email_draft.get('subject', '')}"
+                        )
+                        
+                        logger.info(f"Email sent successfully to {prospect_email}")
+                    else:
+                        print(f"\n❌ Failed to send email to {prospect_email}")
+                        logger.error(f"Failed to send email to {prospect_email}")
+                else:
+                    print("\nNo email address provided - skipping send")
+            else:
+                print("\nEmail draft saved for later. Check Telegram for details.")
         
         # Step 5: Save to HubSpot (if contact info available)
         # For now, we'll save it with the LinkedIn URL as identifier
@@ -186,3 +237,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+    
