@@ -126,10 +126,10 @@ class TelegramNotifier:
                 message += f"[View Lead Profile]({lead_url})\n\n"
             
             message += "Reply with:\n"
-            message += "✅ SEND - to send email\n"
-            message += "✏️ EDIT - to modify\n"
-            message += "❌ SKIP - to skip this lead"
+            message += "✅ *SEND* - I'll ask for the email address\n"
+            message += "❌ *SKIP* - to skip this lead"
             
+            # Send message with draft
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
@@ -141,7 +141,28 @@ class TelegramNotifier:
                     timeout=10.0
                 )
                 
-                return response.status_code == 200
+                if response.status_code == 200:
+                    # Store draft in a simple file for bot to retrieve
+                    # In production, use a database
+                    import json
+                    draft_data = {
+                        "lead_name": lead_name,
+                        "subject": email_subject,
+                        "body": email_body,
+                        "url": lead_url
+                    }
+                    
+                    # Save to temp file
+                    try:
+                        with open('/tmp/last_email_draft.json', 'w') as f:
+                            json.dump(draft_data, f)
+                    except Exception as e:
+                        logger.error(f"Could not save draft: {e}")
+                    
+                    return True
+                else:
+                    logger.error(f"Telegram API error: {response.status_code}")
+                    return False
                 
         except Exception as e:
             logger.error(f"Error sending email draft: {str(e)}")
@@ -207,3 +228,4 @@ class TelegramNotifier:
         except Exception as e:
             logger.error(f"Error sending error alert: {str(e)}")
             return False
+        
