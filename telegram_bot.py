@@ -206,7 +206,7 @@ class TelegramBotHandler:
             del self.pending_emails[user_id]
 
 
-async def main():
+def main():
     """Run the Telegram bot"""
     
     logger.info("Starting Telegram bot handler...")
@@ -226,8 +226,9 @@ async def main():
     
     # Start the bot
     logger.info("Bot is running! Press Ctrl+C to stop.")
-    await application.run_polling(allowed_updates=Update.ALL_TYPES)
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+    
