@@ -142,9 +142,9 @@ class TelegramNotifier:
                 )
                 
                 if response.status_code == 200:
-                    # Store draft in a simple file for bot to retrieve
-                    # In production, use a database
+                    # Store draft in project directory for bot to retrieve
                     import json
+                    import os
                     draft_data = {
                         "lead_name": lead_name,
                         "subject": email_subject,
@@ -152,10 +152,13 @@ class TelegramNotifier:
                         "url": lead_url
                     }
                     
-                    # Save to temp file
+                    # Save to project directory (more reliable than /tmp)
                     try:
-                        with open('/tmp/last_email_draft.json', 'w') as f:
+                        # Get home directory or current directory
+                        draft_path = os.path.expanduser('~/last_email_draft.json')
+                        with open(draft_path, 'w') as f:
                             json.dump(draft_data, f)
+                        logger.info(f"Draft saved to {draft_path}")
                     except Exception as e:
                         logger.error(f"Could not save draft: {e}")
                     
@@ -228,4 +231,4 @@ class TelegramNotifier:
         except Exception as e:
             logger.error(f"Error sending error alert: {str(e)}")
             return False
-        
+        q

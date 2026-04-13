@@ -142,13 +142,18 @@ class TelegramBotHandler:
             )
             return
         
-        # Load the last email draft from temp file
+        # Load the last email draft from home directory
         import json
+        import os
         draft_data = None
         
         try:
-            with open('/tmp/last_email_draft.json', 'r') as f:
+            draft_path = os.path.expanduser('~/last_email_draft.json')
+            with open(draft_path, 'r') as f:
                 draft_data = json.load(f)
+            logger.info(f"Draft loaded from {draft_path}")
+        except FileNotFoundError:
+            logger.error(f"Draft file not found at {draft_path}")
         except Exception as e:
             logger.error(f"Could not load draft: {e}")
         
@@ -185,7 +190,9 @@ class TelegramBotHandler:
                 # Delete the draft file
                 try:
                     import os
-                    os.remove('/tmp/last_email_draft.json')
+                    draft_path = os.path.expanduser('~/last_email_draft.json')
+                    os.remove(draft_path)
+                    logger.info("Draft file deleted")
                 except:
                     pass
             else:
