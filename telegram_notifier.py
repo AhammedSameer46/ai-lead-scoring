@@ -155,6 +155,15 @@ class TelegramNotifier:
                     timeout=10.0
                 )
                 
+                # Also save to file for bot running on same machine
+                if response.status_code == 200:
+                    try:
+                        with open('/tmp/last_email_draft.json', 'w') as f:
+                            json.dump(draft_data, f)
+                        logger.info("Draft saved to /tmp/last_email_draft.json")
+                    except Exception as e:
+                        logger.error(f"Could not save draft file: {e}")
+                
                 return response.status_code == 200
                 
         except Exception as e:
