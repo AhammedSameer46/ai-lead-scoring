@@ -106,6 +106,7 @@ class TelegramNotifier:
     ) -> bool:
         """
         Send drafted email for approval
+        Encode draft data in the message for bot to extract
         
         Args:
             lead_name: Lead's name
@@ -117,6 +118,7 @@ class TelegramNotifier:
             Success boolean
         """
         try:
+            # Build message with embedded draft data
             message = f"📧 *EMAIL DRAFT READY*\n\n"
             message += f"*To:* {lead_name}\n"
             message += f"*Subject:* {email_subject}\n\n"
@@ -127,9 +129,21 @@ class TelegramNotifier:
             
             message += "Reply with:\n"
             message += "✅ *SEND* - I'll ask for the email address\n"
-            message += "❌ *SKIP* - to skip this lead"
+            message += "❌ *SKIP* - to skip this lead\n\n"
             
-            # Send message with draft
+            # Encode draft data at the end (hidden from user view)
+            import json
+            import base64
+            draft_data = {
+                "lead_name": lead_name,
+                "subject": email_subject,
+                "body": email_body,
+                "url": lead_url
+            }
+            encoded_draft = base64.b64encode(json.dumps(draft_data).encode()).decode()
+            message += f"`DRAFT:{encoded_draft}`"
+            
+            # Send message with embedded draft
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
@@ -141,31 +155,7 @@ class TelegramNotifier:
                     timeout=10.0
                 )
                 
-                if response.status_code == 200:
-                    # Store draft in project directory for bot to retrieve
-                    import json
-                    import os
-                    draft_data = {
-                        "lead_name": lead_name,
-                        "subject": email_subject,
-                        "body": email_body,
-                        "url": lead_url
-                    }
-                    
-                    # Save to project directory (more reliable than /tmp)
-                    try:
-                        # Get home directory or current directory
-                        draft_path = os.path.expanduser('~/last_email_draft.json')
-                        with open(draft_path, 'w') as f:
-                            json.dump(draft_data, f)
-                        logger.info(f"Draft saved to {draft_path}")
-                    except Exception as e:
-                        logger.error(f"Could not save draft: {e}")
-                    
-                    return True
-                else:
-                    logger.error(f"Telegram API error: {response.status_code}")
-                    return False
+                return response.status_code == 200
                 
         except Exception as e:
             logger.error(f"Error sending email draft: {str(e)}")
@@ -231,4 +221,4 @@ class TelegramNotifier:
         except Exception as e:
             logger.error(f"Error sending error alert: {str(e)}")
             return False
-        q
+        
