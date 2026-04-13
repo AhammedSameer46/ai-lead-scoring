@@ -86,8 +86,35 @@ class TelegramBotHandler:
             )
     
     async def handle_send(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle SEND command"""
+        """Handle SEND command - extract draft from previous message"""
         user_id = update.effective_user.id
+        
+        # Try to find the draft in recent messages
+        try:
+            # Get the message that user is replying to (if any)
+            # Or look for the most recent draft message
+            
+            # For now, try to extract from replied message
+            if update.message.reply_to_message:
+                replied_text = update.message.reply_to_message.text
+                if replied_text and 'DRAFT:' in replied_text:
+                    # Extract base64 encoded draft
+                    import base64
+                    import json
+                    import re
+                    
+                    match = re.search(r'DRAFT:([A-Za-z0-9+/=]+)', replied_text)
+                    if match:
+                        encoded_draft = match.group(1)
+                        decoded_json = base64.b64decode(encoded_draft).decode()
+                        draft_data = json.loads(decoded_json)
+                        
+                        # Store in context
+                        context.user_data['pending_draft'] = draft_data
+                        logger.info(f"Draft extracted and stored for {draft_data.get('lead_name')}")
+            
+        except Exception as e:
+            logger.error(f"Could not extract draft: {e}")
         
         # Store that we're waiting for email address
         self.pending_emails[user_id] = {
@@ -142,18 +169,31 @@ class TelegramBotHandler:
             )
             return
         
-        # Load the last email draft from home directory
+        # Load the last email draft from /tmp (works on Render)
         import json
         import os
         draft_data = None
         
+        draft_path = '/tmp/last_email_draft.json'
+        logger.info(f"Looking for draft at: {draft_path}")
+        
         try:
-            draft_path = os.path.expanduser('~/last_email_draft.json')
-            with open(draft_path, 'r') as f:
-                draft_data = json.load(f)
-            logger.info(f"Draft loaded from {draft_path}")
+            if os.path.exists(draft_path):
+                with open(draft_path, 'r') as f:
+                    draft_data = json.load(f)
+                logger.info(f"Draft loaded successfully: {draft_data.get('lead_name')}")
+            else:
+                logger.error(f"Draft file does not exist at: {draft_path}")
+                # Try to extract from context as fallback
+                if 'pending_draft' in context.user_data:
+                    draft_data = context.user_data['pending_draft']
+                    logger.info("Draft loaded from context instead")
         except FileNotFoundError:
             logger.error(f"Draft file not found at {draft_path}")
+            # Try context as fallback
+            if 'pending_draft' in context.user_data:
+                draft_data = context.user_data['pending_draft']
+                logger.info("Draft loaded from context instead")
         except Exception as e:
             logger.error(f"Could not load draft: {e}")
         
@@ -163,7 +203,8 @@ class TelegramBotHandler:
                 "Please capture a lead first using the Chrome extension,\n"
                 "then reply SEND when you get the alert."
             )
-            del self.pending_emails[user_id]
+            if user_id in self.pending_emails:
+                del self.pending_emails[user_id]
             return
         
         # Send email
@@ -187,14 +228,17 @@ class TelegramBotHandler:
                     "Lead contacted! 🎉"
                 )
                 
-                # Delete the draft file
+                # Clear draft from file and context
                 try:
                     import os
-                    draft_path = os.path.expanduser('~/last_email_draft.json')
-                    os.remove(draft_path)
-                    logger.info("Draft file deleted")
+                    if os.path.exists('/tmp/last_email_draft.json'):
+                        os.remove('/tmp/last_email_draft.json')
+                        logger.info("Draft file deleted")
                 except:
                     pass
+                
+                if 'pending_draft' in context.user_data:
+                    del context.user_data['pending_draft']
             else:
                 await update.message.reply_text(
                     f"❌ Failed to send email to {email_text}\n\n"
@@ -238,4 +282,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
