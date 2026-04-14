@@ -246,11 +246,21 @@ async def health():
 @app.on_event("startup")
 async def startup():
     """Set webhook on startup"""
-    webhook_url = f"https://telegram-bot-worker.onrender.com/webhook"
-    await application.bot.set_webhook(webhook_url)
-    logger.info(f"Webhook set to: {webhook_url}")
+    import os
+    
+    # Get the service URL from environment or construct it
+    render_service_url = os.getenv('RENDER_EXTERNAL_URL', 'https://telegram-bot-service.onrender.com')
+    webhook_url = f"{render_service_url}/webhook"
+    
+    try:
+        await application.bot.set_webhook(webhook_url)
+        logger.info(f"Webhook set to: {webhook_url}")
+    except Exception as e:
+        logger.error(f"Failed to set webhook: {e}")
+        # Don't crash if webhook fails - the app can still run
 
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+    
