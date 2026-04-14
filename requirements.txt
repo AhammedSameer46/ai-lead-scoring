@@ -8,14 +8,13 @@ pydantic-settings==2.1.0
 groq==0.4.2
 
 # HTTP client
-httpx==0.26.0
+httpx==0.25.2
 
 # Environment variables
 python-dotenv==1.0.0
 
 # Telegram bot
 python-telegram-bot==20.7
-
 
 # Development
 pytest==7.4.4
